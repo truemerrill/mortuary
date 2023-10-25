@@ -1,0 +1,5 @@
+site_name: mortuary
+theme:
+  name: material
+    # logo: assets/icon.png
+    # favicon: assets/favicon.ico
