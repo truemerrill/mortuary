@@ -37,7 +37,7 @@ except ModuleNotFoundError:
     dill = None
 
 try:
-    # TypedDict was added in 3.8.  Remove this when 3.7 support is dropped.
+    # TODO: TypedDict was added in 3.8.  Remove this when 3.7 is dropped.
     from typing import TypedDict
 except ImportError:
 
@@ -138,7 +138,7 @@ def _insert_builtins(tb: "TracebackProxy"):
         tb = tb.tb_next
 
 
-def _get_files(tb: "TracebackProxy") -> dict[str, list[str]]:
+def _get_files(tb: "TracebackProxy") -> "dict[str, list[str]]":
     files = {}
     while tb:
         frame = tb.tb_frame
@@ -353,10 +353,10 @@ def debug(filename: Path, post_mortem: Optional[PostMortemFn] = None):
 
     Args:
         filename (Path): _description_
-        post_mortem (PostMortemFn, optional): callback used to enter post-mortem
-            debugging of a traceback. This callback allows you to use any python
-            debugger you like, so long as it provides a post_mortem function. If
-            not provided, defaults to pdb.post_mortem.
+        post_mortem (PostMortemFn, optional): callback used to enter
+            post-mortem debugging of a traceback. This callback allows you to
+            use any python debugger you like, so long as it provides a
+            post_mortem function. If not provided, defaults to pdb.post_mortem.
     """
     import inspect
     import linecache
