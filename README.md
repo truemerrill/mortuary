@@ -1,9 +1,10 @@
-# mortuary
+![alt text](https://github.com/truemerrill/mortuary/blob/main/docs/assets/logo-color.png?raw=true)
 
 [![PyPI - Version](https://img.shields.io/pypi/v/mortuary.svg)](https://pypi.org/project/mortuary)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mortuary.svg)](https://pypi.org/project/mortuary)
 
 -----
+
 
 **Table of Contents**
 
