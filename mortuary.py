@@ -195,9 +195,9 @@ class CodeProxy:
 
 
 class ClassProxy:
-    def __init__(self, repr, vars):
-        self._repr = repr
-        self.__dict__.update(vars)
+    def __init__(self, repr_, vars_):
+        self._repr = repr_
+        self.__dict__.update(vars_)
 
     def __repr__(self):
         return self._repr
