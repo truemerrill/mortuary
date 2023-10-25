@@ -231,10 +231,10 @@ class TracebackProxy:
 class TracebackDump(TypedDict):
     dump_version: int
     traceback: TracebackProxy
-    files: dict[str, list[str]]
+    files: "dict[str, list[str]]"
     python_version: str
     python_executable: str
-    python_path: list[str]
+    python_path: "list[str]"
 
 
 def dump(filename: Path, tb: Optional[TracebackType] = None):
