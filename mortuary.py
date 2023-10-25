@@ -29,12 +29,20 @@ from argparse import ArgumentParser
 from pathlib import Path
 from traceback import print_tb
 from types import CodeType, FrameType, TracebackType
-from typing import Any, Callable, Optional, TypedDict, Union
+from typing import Any, Callable, Optional, Union
 
 try:
     import dill
 except ModuleNotFoundError:
     dill = None
+
+try:
+    # TypedDict was added in 3.8.  Remove this when 3.7 support is dropped.
+    from typing import TypedDict
+except ImportError:
+
+    class TypedDict:
+        pass
 
 
 __version__ = "0.1.0"
