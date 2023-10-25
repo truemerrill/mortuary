@@ -1,4 +1,4 @@
-name: pages-publish 
+name: Documentation 
 on:
   push:
     branches:

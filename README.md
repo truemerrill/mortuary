@@ -1,5 +1,7 @@
 ![alt text](https://github.com/truemerrill/mortuary/blob/main/docs/assets/logo-color.png?raw=true)
 
+![Tests](https://github.com/truemerrill/mortuary/actions/workflows/python-test.yml/badge.svg)
+![Documentation](https://github.com/truemerrill/mortuary/actions/workflows/pages-publish.yml/badge.svg)
 [![PyPI - Version](https://img.shields.io/pypi/v/mortuary.svg)](https://pypi.org/project/mortuary)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mortuary.svg)](https://pypi.org/project/mortuary)
 
