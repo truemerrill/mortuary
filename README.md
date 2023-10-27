@@ -3,6 +3,7 @@
 [![Documentation](https://github.com/truemerrill/mortuary/actions/workflows/pages-publish.yml/badge.svg)](https://truemerrill.github.io/mortuary/)
 [![PyPI - Version](https://img.shields.io/pypi/v/mortuary.svg)](https://pypi.org/project/mortuary)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mortuary.svg)](https://pypi.org/project/mortuary)
+[![Documentation](https://img.shields.io/badge/Documentation)](https://truemerrill.github.io/mortuary/)
 
 -----
 
