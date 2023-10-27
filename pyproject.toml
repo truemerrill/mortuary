@@ -39,13 +39,15 @@ test = [
 dev = [
   "pytest",
   "mkdocs",
-  "mkdocs-material"
+  "mkdocs-material",
+  "mkdocstrings",
+  "mkdocstrings-python"
 ]
 
 [project.urls]
-Documentation = "https://github.com/unknown/mortuary#readme"
-Issues = "https://github.com/unknown/mortuary/issues"
-Source = "https://github.com/unknown/mortuary"
+Documentation = "https://truemerrill.github.io/mortuary/"
+Issues = "https://github.com/truemerrill/mortuary/issues"
+Source = "https://github.com/truemerrill/mortuary"
 
 [tool.hatch.version]
 path = "mortuary.py"

@@ -5,7 +5,7 @@ import pytest
 import mortuary
 
 
-class TestingError(Exception):
+class FakeError(Exception):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -13,9 +13,9 @@ class TestingError(Exception):
 
 def test_dump(tmp_path):
     dump_file = tmp_path / "dump.pkl"
-    with pytest.raises(TestingError) as excinfo:
+    with pytest.raises(FakeError) as excinfo:
         with mortuary.context(dump_file):
-            raise TestingError(message="Test message")
+            raise FakeError(message="Test message")
 
     assert excinfo.value.message == "Test message"
     dump = mortuary.read(dump_file)

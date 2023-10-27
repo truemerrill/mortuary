@@ -1,5 +1,27 @@
 site_name: mortuary
 theme:
   name: material
-    # logo: assets/icon.png
-    # favicon: assets/favicon.ico
+  features:
+    - header.autohide
+repo_url: https://github.com/truemerrill/mortuary
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            heading_level: 3
+  

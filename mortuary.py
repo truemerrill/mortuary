@@ -349,7 +349,8 @@ PostMortemFn = Union[
 def debug(filename: Path, post_mortem: Optional[PostMortemFn] = None):
     """Attach a debugger to a traceback dump file.
 
-    Note: This function will launch an interactive debugger session.
+    Note:
+        This function will launch an interactive debugger session.
 
     Args:
         filename (Path): _description_
@@ -381,10 +382,10 @@ class TracebackContextManager:
 
     def __init__(
         self,
-        dump: Path,
-        log: Path,
+        dump: Optional[Path],
+        log: Optional[Path],
     ):
-        self.dump = dump
+        self.dump = dump if dump is not None else Path("traceback-dump.pkl")
         self.log = log
 
     def __enter__(self):
@@ -393,7 +394,8 @@ class TracebackContextManager:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if exc_type is not None:
             dump(self.dump, exc_traceback)
-            log(self.log, exc_traceback)
+            if self.log is not None:
+                log(self.log, exc_traceback)
         return False
 
 
@@ -402,9 +404,10 @@ def context(
 ) -> TracebackContextManager:
     """Execute code within a traceback context manager.
 
-    Note: this context manager does not capture exceptions.  Any exceptions
-    raised by the enclosed code will continue to propagate after being logged
-    by the context manager.
+    Note:
+        This context manager does not capture exceptions.  Any exceptions
+        raised by the enclosed code will continue to propagate after being
+        logged by the context manager.
 
     Examples:
         >>> with context():
@@ -413,16 +416,12 @@ def context(
     Args:
         dump (Path, optional): the traceback dump file. Defaults to
             "traceback-dump.pkl".
-        log (Path, optional): the traceback log file. Defaults to
-            "traceback-log.txt".
+        log (Path, optional): the traceback log file. If not provided, then
+            no traceback log is created.  Defaults to None.
 
     Returns:
         TracebackContextManager: the traceback context
     """
-    if dump is None:
-        dump = Path("traceback-dump.pkl")
-    if log is None:
-        log = Path("traceback-log.txt")
     return TracebackContextManager(dump, log)
 
 
