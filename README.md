@@ -1,5 +1,4 @@
 ![alt text](https://github.com/truemerrill/mortuary/blob/main/docs/assets/logo-color.png?raw=true)
-
 ![Tests](https://github.com/truemerrill/mortuary/actions/workflows/python-test.yml/badge.svg)
 [![Documentation](https://github.com/truemerrill/mortuary/actions/workflows/pages-publish.yml/badge.svg)](https://truemerrill.github.io/mortuary/)
 [![PyPI - Version](https://img.shields.io/pypi/v/mortuary.svg)](https://pypi.org/project/mortuary)
@@ -15,7 +14,8 @@ pickle format, and later allows you to attach a debugger to the traceback file.
 * _No dependencies_: Mortuary has no dependencies outside the standard library.
   `dill` and `ipdb` are optional dependencies.
 * _Portable_: Mortuary's dump files are portable between different versions of
-  Python and different machines.
+  Python and different machines.  Attach dump files to tickets to share a
+  debugging context between developers.
 
 ## Example
 
@@ -62,7 +62,7 @@ $ python -m mortuary traceback-dump.pkl
 
 ## Installation
 
-Mortuary is distributed on PyPi and is pip-installable
+Mortuary is distributed on PyPI and is pip-installable
 
 ```console
 pip install mortuary
@@ -72,7 +72,7 @@ Alternatively, you can simply copy the `mortuary.py` file directly into your pro
 ## Similar projects
 
 * [pystack](https://github.com/bloomberg/pystack)
-* [debuglater](https://github.com/ploomber/debuglater))
+* [debuglater](https://github.com/ploomber/debuglater)
 
 ## License
 
