@@ -39,7 +39,9 @@ test = [
 dev = [
   "pytest",
   "mkdocs",
-  "mkdocs-material"
+  "mkdocs-material",
+  "mkdocstrings",
+  "mkdocstrings-python"
 ]
 
 [project.urls]

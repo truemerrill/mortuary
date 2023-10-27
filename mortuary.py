@@ -349,7 +349,8 @@ PostMortemFn = Union[
 def debug(filename: Path, post_mortem: Optional[PostMortemFn] = None):
     """Attach a debugger to a traceback dump file.
 
-    Note: This function will launch an interactive debugger session.
+    Note:
+        This function will launch an interactive debugger session.
 
     Args:
         filename (Path): _description_
@@ -403,9 +404,10 @@ def context(
 ) -> TracebackContextManager:
     """Execute code within a traceback context manager.
 
-    Note: this context manager does not capture exceptions.  Any exceptions
-    raised by the enclosed code will continue to propagate after being logged
-    by the context manager.
+    Note:
+        This context manager does not capture exceptions.  Any exceptions
+        raised by the enclosed code will continue to propagate after being
+        logged by the context manager.
 
     Examples:
         >>> with context():
