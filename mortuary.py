@@ -45,7 +45,7 @@ except ImportError:
         pass
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 __all__ = (
@@ -61,7 +61,9 @@ MORTUARY_DUMP_VERSION = 1
 
 
 # Type aliases
-PostMortemFn = Union[Callable[[TracebackType], None], Callable[["TracebackProxy"], None]]
+PostMortemFn = Union[
+    Callable[[TracebackType], None], Callable[["TracebackProxy"], None]
+]
 TracebackLike = Union[TracebackType, "TracebackProxy"]
 PathLike = Union[str, Path]
 PathCallbackFn = Callable[
@@ -131,7 +133,11 @@ def _remove_builtins(tb: "TracebackProxy"):
     while tb:
         frame = tb.tb_frame
         while frame:
-            frame.f_globals = {k: v for k, v in frame.f_globals.items() if k not in dir(builtins)}
+            frame.f_globals = {
+                k: v
+                for k, v in frame.f_globals.items()
+                if k not in dir(builtins)
+            }
             frame = frame.f_back  # type: ignore
         tb = tb.tb_next  # type: ignore
 
@@ -156,7 +162,9 @@ def _get_files(tb: "TracebackProxy") -> "dict[str, list[str]]":
                     with open(filename) as f:
                         files[filename] = f.readlines()
                 except FileNotFoundError:
-                    files[filename] = [f"couldn't locate {filename} during dump"]
+                    files[filename] = [
+                        f"couldn't locate {filename} during dump"
+                    ]
             frame = frame.f_back  # type: ignore
         tb = tb.tb_next  # type: ignore
     return files
@@ -185,7 +193,10 @@ class CodeProxy:
         self.co_name = code.co_name
         self.co_argcount = code.co_argcount
         self.co_kwonlyargcount = code.co_kwonlyargcount
-        self.co_consts = tuple(CodeProxy(c) if hasattr(c, "co_filename") else c for c in code.co_consts)
+        self.co_consts = tuple(
+            CodeProxy(c) if hasattr(c, "co_filename") else c
+            for c in code.co_consts
+        )
         self.co_firstlineno = code.co_firstlineno
         self.co_lnotab = code.co_lnotab
         self.co_varnames = code.co_varnames
@@ -221,7 +232,9 @@ class TracebackProxy:
     def __init__(self, traceback: TracebackType):
         self.tb_frame = FrameProxy(traceback.tb_frame)
         self.tb_lineno = traceback.tb_lineno
-        self.tb_next = TracebackProxy(traceback.tb_next) if traceback.tb_next else None
+        self.tb_next = (
+            TracebackProxy(traceback.tb_next) if traceback.tb_next else None
+        )
         self.tb_lasti = 0
 
 
@@ -311,10 +324,22 @@ def read(filename: PathLike) -> TracebackDump:
 
 
 def _monkey_patch_inspect(inspect):
-    inspect.isframe = lambda obj: isinstance(obj, FrameType) or obj.__class__.__name__ == "FrameProxy"
-    inspect.iscode = lambda obj: isinstance(obj, CodeType) or obj.__class__.__name__ == "CodeProxy"
-    inspect.isclass = lambda obj: isinstance(obj, type) or obj.__class__.__name__ == "ClassProxy"
-    inspect.istraceback = lambda obj: isinstance(obj, TracebackType) or obj.__class__.__name__ == "TracebackProxy"
+    inspect.isframe = (
+        lambda obj: isinstance(obj, FrameType)
+        or obj.__class__.__name__ == "FrameProxy"
+    )
+    inspect.iscode = (
+        lambda obj: isinstance(obj, CodeType)
+        or obj.__class__.__name__ == "CodeProxy"
+    )
+    inspect.isclass = (
+        lambda obj: isinstance(obj, type)
+        or obj.__class__.__name__ == "ClassProxy"
+    )
+    inspect.istraceback = (
+        lambda obj: isinstance(obj, TracebackType)
+        or obj.__class__.__name__ == "TracebackProxy"
+    )
 
 
 def _monkey_patch_linecache(linecache, dump: TracebackDump):
@@ -403,9 +428,17 @@ class TracebackContextManager:
         exc_value: Optional[BaseException],
         exc_traceback: Optional[TracebackType],
     ):
-        if (exc_type is not None) and (exc_value is not None) and (exc_traceback is not None):
-            dump_file = _resolve_path(self.dump, exc_type, exc_value, exc_traceback)
-            log_file = _resolve_path(self.log, exc_type, exc_value, exc_traceback)
+        if (
+            (exc_type is not None)
+            and (exc_value is not None)
+            and (exc_traceback is not None)
+        ):
+            dump_file = _resolve_path(
+                self.dump, exc_type, exc_value, exc_traceback
+            )
+            log_file = _resolve_path(
+                self.log, exc_type, exc_value, exc_traceback
+            )
 
             if dump_file:
                 dump(dump_file, exc_traceback)
@@ -456,8 +489,12 @@ def cli():
             pass
         return post_mortem
 
-    parser = ArgumentParser(description="Launch a debugging session from a dump file")
-    parser.add_argument("-d", "--debugger", nargs=1, choices=["pdb", "ipdb"], default="pdb")
+    parser = ArgumentParser(
+        description="Launch a debugging session from a dump file"
+    )
+    parser.add_argument(
+        "-d", "--debugger", nargs=1, choices=["pdb", "ipdb"], default="pdb"
+    )
     parser.add_argument("filename")
     args = parser.parse_args()
     debug(Path.cwd() / args.filename, get_post_mortem_func(args.debugger))
