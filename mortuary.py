@@ -67,10 +67,10 @@ PostMortemFn = Union[
 TracebackLike = Union[TracebackType, "TracebackProxy"]
 PathLike = Union[str, Path]
 PathCallbackFn = Callable[
-    [Type[BaseException], BaseException, "TracebackLike"],
+    [Type[BaseException], BaseException, TracebackType],
     Union[PathLike, None],
 ]
-AfterCallbackFn = Callable[[Path], None]
+AfterCallbackFn = Callable[[], None]
 
 
 def _convert(v: Any) -> Any:
@@ -444,6 +444,8 @@ class TracebackContextManager:
                 dump(dump_file, exc_traceback)
             if log_file:
                 log(log_file, exc_traceback)
+            if self.after:
+                self.after()
         return False
 
 
@@ -464,10 +466,22 @@ def context(
         >>>     print(1 / 0)
 
     Args:
-        dump (Path, optional): the traceback dump file. Defaults to
-            "traceback-dump.pkl".
-        log (Path, optional): the traceback log file. If not provided, then
-            no traceback log is created.  Defaults to None.
+        dump (PathLike, PathCallbackFn, optional): the traceback dump file. If
+            this argument is a Path or string it is treated as a the filename
+            of the dump file. If instead this argument is a callback function,
+            the callback is evaluated when the exception is detected. The
+            callback returns the filename of the dump file or `None` if no
+            dump file should be captured. Defaults to "traceback-dump.pkl".
+        log (PathLike, PathCallbackFn, optional): the traceback log file. If
+            this argument is a Path or string it is treated as a the filename
+            of the traceback log file. If instead this argument is a callback
+            function, the callback is evaluated when the exception is detected.
+            The callback returns the filename of the log file or `None` if no
+            log file should be captured. Defaults to None.
+        after (AfterCallbackFn, optional): callback executed after the
+            exception is logged and immediately prior to exiting the context.
+            This callback is used to execute arbitrary cleanup code.  Defaults
+            to None.
 
     Returns:
         TracebackContextManager: the traceback context

@@ -79,6 +79,64 @@ Alternatively, you can simply copy the `mortuary.py` file directly into your pro
 
 ## Reference
 
+### Types
+
+::: mortuary.PathLike
+
+The type of an object that can be coerced into a path to a file.
+
+
+::: mortuary.PathCallbackFn
+
+The type of a callback function that can resolve a file path.  
+
+!!! note
+    `PathCallbackFn` callbacks are executed when an exception is detected by
+    the mortuary context.  Callbacks must accept the exception type, the exception, and the traceback as input arguments and return the path
+    to the file or `None` if no file should be written.  This behavior makes
+    it possible to control **when** and **where** traceback files are created.
+
+**Examples:**
+
+```python
+
+# Only capture dumps from a particular exception type
+
+def dump_path(exc_type, exc_value, exc_traceback):
+    if exc_type is MySpecialException:
+        return "dump.pkl"
+    return None
+
+with mortuary.context(dump=dump_path):
+    risky_code()
+```
+
+```python
+
+# Use a filename that depends on data that is only available when the exception
+# is raised
+
+def dump_path(exc_type, exc_value, exc_traceback):
+    filename = exc_traceback.tb_frame.f_code.co_filename
+    lineno = exc_traceback.tb_lineno
+    return f"{filename}-{lineno}.pkl"
+
+with mortuary.context(dump=dump_path):
+    risky_code()
+```
+
+::: mortuary.AfterCallbackFn
+
+The type of a callback function executed after the exception is logged and immediately prior to exiting the context. This callback is used to execute arbitrary cleanup code.
+
+::: mortuary.PostMortemFn
+
+The type of a callback function used to enter a post-mortem debugging session.
+See [pdb.post_mortem](https://docs.python.org/3/library/pdb.html#pdb.post_mortem) and [ipdb.post_mortem](https://github.com/gotcha/ipdb) for example implementations.
+
+
+### Functions
+
 ::: mortuary.context
 
 ::: mortuary.debug
