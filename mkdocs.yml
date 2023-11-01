@@ -23,5 +23,5 @@ plugins:
         python:
           options:
             show_root_heading: true
-            heading_level: 3
+            heading_level: 4
   
