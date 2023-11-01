@@ -27,3 +27,28 @@ def test_dump(tmp_path):
 
     tb = dump["traceback"]
     assert tb.tb_lineno == 18
+
+
+def test_dump_path_callback(tmp_path):
+    dump_file = tmp_path / "dump.pkl"
+
+    class DumpPathCallback:
+        """A callable that tracks if it's been called"""
+
+        def __init__(self):
+            self.triggered = False
+
+        def __call__(self, exc_type, exc_value, traceback):  # noqa: ARG002
+            self.triggered = True
+            return dump_file
+
+    dump_path_callback = DumpPathCallback()
+
+    assert dump_path_callback.triggered is False
+    assert dump_file.exists() is False
+    with pytest.raises(FakeError):
+        with mortuary.context(dump=dump_path_callback):
+            raise FakeError(message="Test message")
+
+    assert dump_path_callback.triggered is True
+    assert dump_file.exists() is True

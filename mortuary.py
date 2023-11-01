@@ -29,10 +29,10 @@ from argparse import ArgumentParser
 from pathlib import Path
 from traceback import print_tb
 from types import CodeType, FrameType, TracebackType
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Type, Union
 
 try:
-    import dill
+    import dill  # type: ignore
 except ModuleNotFoundError:
     dill = None
 
@@ -41,11 +41,11 @@ try:
     from typing import TypedDict
 except ImportError:
 
-    class TypedDict:
+    class TypedDict:  # type: ignore
         pass
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 __all__ = (
@@ -58,6 +58,19 @@ __all__ = (
 
 
 MORTUARY_DUMP_VERSION = 1
+
+
+# Type aliases
+PostMortemFn = Union[
+    Callable[[TracebackType], None], Callable[["TracebackProxy"], None]
+]
+TracebackLike = Union[TracebackType, "TracebackProxy"]
+PathLike = Union[str, Path]
+PathCallbackFn = Callable[
+    [Type[BaseException], BaseException, TracebackType],
+    Union[PathLike, None],
+]
+AfterCallbackFn = Callable[[], None]
 
 
 def _convert(v: Any) -> Any:
@@ -125,8 +138,8 @@ def _remove_builtins(tb: "TracebackProxy"):
                 for k, v in frame.f_globals.items()
                 if k not in dir(builtins)
             }
-            frame = frame.f_back
-        tb = tb.tb_next
+            frame = frame.f_back  # type: ignore
+        tb = tb.tb_next  # type: ignore
 
 
 def _insert_builtins(tb: "TracebackProxy"):
@@ -134,8 +147,8 @@ def _insert_builtins(tb: "TracebackProxy"):
         frame = tb.tb_frame
         while frame:
             frame.f_globals.update(builtins.__dict__)
-            frame = frame.f_back
-        tb = tb.tb_next
+            frame = frame.f_back  # type: ignore
+        tb = tb.tb_next  # type: ignore
 
 
 def _get_files(tb: "TracebackProxy") -> "dict[str, list[str]]":
@@ -152,8 +165,8 @@ def _get_files(tb: "TracebackProxy") -> "dict[str, list[str]]":
                     files[filename] = [
                         f"couldn't locate {filename} during dump"
                     ]
-            frame = frame.f_back
-        tb = tb.tb_next
+            frame = frame.f_back  # type: ignore
+        tb = tb.tb_next  # type: ignore
     return files
 
 
@@ -237,12 +250,12 @@ class TracebackDump(TypedDict):
     python_path: "list[str]"
 
 
-def dump(filename: Path, tb: Optional[TracebackType] = None):
+def dump(filename: PathLike, tb: Optional[TracebackLike] = None):
     """Dump a traceback to a pickle file for later analysis.
 
     Args:
-        filename (Path): the dump file
-        tb (TracebackType, optional): the traceback to dump. If not provided,
+        filename (PathLike): the dump file
+        tb (TracebackLike, optional): the traceback to dump. If not provided,
             defaults to the traceback on `sys.exc_info()` (i.e. the last thrown
             error).
     """
@@ -254,7 +267,7 @@ def dump(filename: Path, tb: Optional[TracebackType] = None):
         msg = "could not resolve traceback"
         raise ValueError(msg)
 
-    tb_proxy = TracebackProxy(tb)
+    tb_proxy = TracebackProxy(tb)  # type: ignore
     _remove_builtins(tb_proxy)
 
     dump = {
@@ -273,11 +286,11 @@ def dump(filename: Path, tb: Optional[TracebackType] = None):
             pickle.dump(dump, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def log(filename: Path, tb: Optional[TracebackType] = None):
+def log(filename: PathLike, tb: Optional[TracebackType] = None):
     """Write a traceback to a log file.
 
     Args:
-        filename (Path): the log file
+        filename (PathLike): the log file
         tb (TracebackType, optional): the traceback to dump. If not provided,
             defaults to the traceback on `sys.exc_info()` (i.e. the last thrown
             error).
@@ -292,11 +305,11 @@ def log(filename: Path, tb: Optional[TracebackType] = None):
         print_tb(tb, file=f)
 
 
-def read(filename: Path) -> TracebackDump:
+def read(filename: PathLike) -> TracebackDump:
     """Read a traceback dump from a pickle file for analysis.
 
     Args:
-        filename (Path): the dump file
+        filename (PathLike): the dump file
 
     Returns:
         TracebackDump: the traceback dump
@@ -341,19 +354,14 @@ def _monkey_patch_linecache(linecache, dump: TracebackDump):
     linecache.getlines = getlines
 
 
-PostMortemFn = Union[
-    Callable[[TracebackType], None], Callable[[TracebackProxy], None]
-]
-
-
-def debug(filename: Path, post_mortem: Optional[PostMortemFn] = None):
+def debug(filename: PathLike, post_mortem: Optional[PostMortemFn] = None):
     """Attach a debugger to a traceback dump file.
 
     Note:
         This function will launch an interactive debugger session.
 
     Args:
-        filename (Path): _description_
+        filename (PathLike): the dump file
         post_mortem (PostMortemFn, optional): callback used to enter
             post-mortem debugging of a traceback. This callback allows you to
             use any python debugger you like, so long as it provides a
@@ -362,8 +370,12 @@ def debug(filename: Path, post_mortem: Optional[PostMortemFn] = None):
     import inspect
     import linecache
 
+    if not isinstance(filename, Path):
+        filename = Path(filename)
     if post_mortem is None:
         from pdb import post_mortem
+    if post_mortem is None:
+        raise ValueError()
 
     dump = read(filename)
     tb = dump["traceback"]
@@ -371,10 +383,27 @@ def debug(filename: Path, post_mortem: Optional[PostMortemFn] = None):
     _monkey_patch_inspect(inspect)
     _monkey_patch_linecache(linecache, dump)
     _insert_builtins(tb)
-    post_mortem(tb)
+    post_mortem(tb)  # type: ignore
 
 
 # --- Context manager ---------------------------------------------------------
+
+
+def _resolve_path(
+    path: Union[PathLike, PathCallbackFn, None],
+    exc_type: Type[BaseException],
+    exc_value: BaseException,
+    traceback: TracebackType,
+) -> Union[Path, None]:
+    def _as_path(path: Union[PathLike, None]) -> Union[Path, None]:
+        return Path(path) if path is not None else None
+
+    if path is None:
+        return None
+    elif callable(path):
+        return _as_path(path(exc_type, exc_value, traceback))
+    else:
+        return Path(path) if isinstance(path, str) else path
 
 
 class TracebackContextManager:
@@ -382,25 +411,48 @@ class TracebackContextManager:
 
     def __init__(
         self,
-        dump: Optional[Path],
-        log: Optional[Path],
+        dump: Optional[Union[PathLike, PathCallbackFn]] = None,
+        log: Optional[Union[PathLike, PathCallbackFn]] = None,
+        after: Optional[AfterCallbackFn] = None,
     ):
         self.dump = dump if dump is not None else Path("traceback-dump.pkl")
         self.log = log
+        self.after = after
 
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if exc_type is not None:
-            dump(self.dump, exc_traceback)
-            if self.log is not None:
-                log(self.log, exc_traceback)
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_traceback: Optional[TracebackType],
+    ):
+        if (
+            (exc_type is not None)
+            and (exc_value is not None)
+            and (exc_traceback is not None)
+        ):
+            dump_file = _resolve_path(
+                self.dump, exc_type, exc_value, exc_traceback
+            )
+            log_file = _resolve_path(
+                self.log, exc_type, exc_value, exc_traceback
+            )
+
+            if dump_file:
+                dump(dump_file, exc_traceback)
+            if log_file:
+                log(log_file, exc_traceback)
+            if self.after:
+                self.after()
         return False
 
 
 def context(
-    dump: Optional[Path] = None, log: Optional[Path] = None
+    dump: Optional[Union[PathLike, PathCallbackFn]] = None,
+    log: Optional[Union[PathLike, PathCallbackFn]] = None,
+    after: Optional[AfterCallbackFn] = None,
 ) -> TracebackContextManager:
     """Execute code within a traceback context manager.
 
@@ -414,15 +466,27 @@ def context(
         >>>     print(1 / 0)
 
     Args:
-        dump (Path, optional): the traceback dump file. Defaults to
-            "traceback-dump.pkl".
-        log (Path, optional): the traceback log file. If not provided, then
-            no traceback log is created.  Defaults to None.
+        dump (PathLike, PathCallbackFn, optional): the traceback dump file. If
+            this argument is a Path or string it is treated as a the filename
+            of the dump file. If instead this argument is a callback function,
+            the callback is evaluated when the exception is detected. The
+            callback returns the filename of the dump file or `None` if no
+            dump file should be captured. Defaults to "traceback-dump.pkl".
+        log (PathLike, PathCallbackFn, optional): the traceback log file. If
+            this argument is a Path or string it is treated as a the filename
+            of the traceback log file. If instead this argument is a callback
+            function, the callback is evaluated when the exception is detected.
+            The callback returns the filename of the log file or `None` if no
+            log file should be captured. Defaults to None.
+        after (AfterCallbackFn, optional): callback executed after the
+            exception is logged and immediately prior to exiting the context.
+            This callback is used to execute arbitrary cleanup code.  Defaults
+            to None.
 
     Returns:
         TracebackContextManager: the traceback context
     """
-    return TracebackContextManager(dump, log)
+    return TracebackContextManager(dump, log, after)
 
 
 def cli():
@@ -432,9 +496,9 @@ def cli():
         post_mortem = None
         try:
             if debugger == "pdb":
-                from pdb import post_mortem
+                from pdb import post_mortem  # type: ignore
             elif debugger == "ipdb":
-                from ipdb import post_mortem
+                from ipdb import post_mortem  # type: ignore
         except ImportError:
             pass
         return post_mortem
