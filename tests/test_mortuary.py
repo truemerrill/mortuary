@@ -38,7 +38,7 @@ def test_dump_path_callback(tmp_path):
         def __init__(self):
             self.triggered = False
 
-        def __call__(self, exc_type, exc_value, traceback):
+        def __call__(self, exc_type, exc_value, traceback):  # noqa: ARG002
             self.triggered = True
             return dump_file
 
