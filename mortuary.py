@@ -23,7 +23,6 @@ THE SOFTWARE.
 """
 
 import builtins
-import inspect
 import pickle
 import sys
 from argparse import ArgumentParser
@@ -33,7 +32,7 @@ from types import CodeType, FrameType, TracebackType
 from typing import Any, Callable, Optional, Type, Union
 
 try:
-    import dill
+    import dill  # type: ignore
 except ModuleNotFoundError:
     dill = None
 
@@ -42,7 +41,7 @@ try:
     from typing import TypedDict
 except ImportError:
 
-    class TypedDict:  # typing: ignore
+    class TypedDict:  # type: ignore
         pass
 
 
@@ -65,12 +64,9 @@ MORTUARY_DUMP_VERSION = 1
 PostMortemFn = Union[Callable[[TracebackType], None], Callable[["TracebackProxy"], None]]
 TracebackLike = Union[TracebackType, "TracebackProxy"]
 PathLike = Union[str, Path]
-PathCallbackFn = Union[
-    Callable[[], Union[PathLike, None]],
-    Callable[
-        [Type[BaseException], BaseException, "TracebackLike"],
-        Union[PathLike, None],
-    ],
+PathCallbackFn = Callable[
+    [Type[BaseException], BaseException, "TracebackLike"],
+    Union[PathLike, None],
 ]
 AfterCallbackFn = Callable[[Path], None]
 
@@ -136,8 +132,8 @@ def _remove_builtins(tb: "TracebackProxy"):
         frame = tb.tb_frame
         while frame:
             frame.f_globals = {k: v for k, v in frame.f_globals.items() if k not in dir(builtins)}
-            frame = frame.f_back
-        tb = tb.tb_next
+            frame = frame.f_back  # type: ignore
+        tb = tb.tb_next  # type: ignore
 
 
 def _insert_builtins(tb: "TracebackProxy"):
@@ -145,8 +141,8 @@ def _insert_builtins(tb: "TracebackProxy"):
         frame = tb.tb_frame
         while frame:
             frame.f_globals.update(builtins.__dict__)
-            frame = frame.f_back
-        tb = tb.tb_next
+            frame = frame.f_back  # type: ignore
+        tb = tb.tb_next  # type: ignore
 
 
 def _get_files(tb: "TracebackProxy") -> "dict[str, list[str]]":
@@ -161,8 +157,8 @@ def _get_files(tb: "TracebackProxy") -> "dict[str, list[str]]":
                         files[filename] = f.readlines()
                 except FileNotFoundError:
                     files[filename] = [f"couldn't locate {filename} during dump"]
-            frame = frame.f_back
-        tb = tb.tb_next
+            frame = frame.f_back  # type: ignore
+        tb = tb.tb_next  # type: ignore
     return files
 
 
@@ -222,7 +218,7 @@ class FrameProxy:
 
 
 class TracebackProxy:
-    def __init__(self, traceback: TracebackLike):
+    def __init__(self, traceback: TracebackType):
         self.tb_frame = FrameProxy(traceback.tb_frame)
         self.tb_lineno = traceback.tb_lineno
         self.tb_next = TracebackProxy(traceback.tb_next) if traceback.tb_next else None
@@ -258,7 +254,7 @@ def dump(filename: PathLike, tb: Optional[TracebackLike] = None):
         msg = "could not resolve traceback"
         raise ValueError(msg)
 
-    tb_proxy = TracebackProxy(tb)
+    tb_proxy = TracebackProxy(tb)  # type: ignore
     _remove_builtins(tb_proxy)
 
     dump = {
@@ -353,6 +349,8 @@ def debug(filename: PathLike, post_mortem: Optional[PostMortemFn] = None):
         filename = Path(filename)
     if post_mortem is None:
         from pdb import post_mortem
+    if post_mortem is None:
+        raise ValueError()
 
     dump = read(filename)
     tb = dump["traceback"]
@@ -360,14 +358,14 @@ def debug(filename: PathLike, post_mortem: Optional[PostMortemFn] = None):
     _monkey_patch_inspect(inspect)
     _monkey_patch_linecache(linecache, dump)
     _insert_builtins(tb)
-    post_mortem(tb)
+    post_mortem(tb)  # type: ignore
 
 
 # --- Context manager ---------------------------------------------------------
 
 
 def _resolve_path(
-    path: Union[PathLike, PathCallbackFn],
+    path: Union[PathLike, PathCallbackFn, None],
     exc_type: Type[BaseException],
     exc_value: BaseException,
     traceback: TracebackType,
@@ -375,15 +373,10 @@ def _resolve_path(
     def _as_path(path: Union[PathLike, None]) -> Union[Path, None]:
         return Path(path) if path is not None else None
 
-    if callable(path):
-        signature = inspect.signature(path)
-        if len(signature.parameters) == 0:
-            return _as_path(path())
-        elif len(signature.parameters) == 3:
-            return _as_path(path(exc_type, exc_value, traceback))
-        else:
-            msg = "invalid callback signature, expected a PathCallbackFn"
-            raise ValueError(msg)
+    if path is None:
+        return None
+    elif callable(path):
+        return _as_path(path(exc_type, exc_value, traceback))
     else:
         return Path(path) if isinstance(path, str) else path
 
@@ -410,7 +403,7 @@ class TracebackContextManager:
         exc_value: Optional[BaseException],
         exc_traceback: Optional[TracebackType],
     ):
-        if exc_type is not None:
+        if (exc_type is not None) and (exc_value is not None) and (exc_traceback is not None):
             dump_file = _resolve_path(self.dump, exc_type, exc_value, exc_traceback)
             log_file = _resolve_path(self.log, exc_type, exc_value, exc_traceback)
 
@@ -456,9 +449,9 @@ def cli():
         post_mortem = None
         try:
             if debugger == "pdb":
-                from pdb import post_mortem
+                from pdb import post_mortem  # type: ignore
             elif debugger == "ipdb":
-                from ipdb import post_mortem
+                from ipdb import post_mortem  # type: ignore
         except ImportError:
             pass
         return post_mortem
